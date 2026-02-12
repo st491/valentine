@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>💘 Valentine?</title>
+
+  <style>
+    :root{
+      --bg1:#ffe6ee;
+      --bg2:#ffd1e1;
+      --card:#ffffff;
+      --pink:#d6336c;
+      --yes:#40c057;
+      --no:#fa5252;
+      --shadow: 0 18px 40px rgba(0,0,0,.14);
+    }
+
+    *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family:-apple-system, system-ui, Segoe UI, Roboto, Arial, sans-serif;
+      background:
+        radial-gradient(1200px 700px at 50% 0%, #fff 0%, var(--bg1) 55%),
+        radial-gradient(900px 600px at 10% 90%, #fff 0%, var(--bg2) 60%);
+      overflow:hidden;
+      user-select:none;
+      touch-action: manipulation;
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    /* Floating hearts background */
+    .float{
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      opacity:.45;
+      z-index:0;
+    }
+    .float span{
+      position:absolute;
+      font-size: 18px;
+      animation: drift 7s linear infinite;
+      filter: drop-shadow(0 6px 8px rgba(0,0,0,.08));
+    }
+    @keyframes drift{
+      0%{ transform: translateY(60px); opacity:0; }
+      10%{ opacity:1; }
+      100%{ transform: translateY(-620px); opacity:0; }
+    }
+
+    /* Layout sections */
+    .screen{
+      position:relative;
+      z-index:1;
+      height:100%;
+      display:none;
+      padding: 18px;
+      padding-top: calc(18px + env(safe-area-inset-top));
+      padding-bottom: calc(18px + env(safe-area-inset-bottom));
+    }
+    .screen.active{ display:flex; }
+
+    .center{
+      width:100%;
+      max-width: 920px;
+      margin:auto;
+      text-align:center;
+    }
+
+    .bigTitle{
+      color: var(--pink);
+      font-weight: 900;
+      letter-spacing: .2px;
+      line-height: 1.05;
+      font-size: clamp(34px, 9vw, 72px);
+      margin: 8px 0 14px;
+      text-shadow: 0 10px 22px rgba(214,51,108,.12);
+    }
+
+    .sub{
+      margin: 0 0 14px;
+      color:#6b6b6b;
+      font-size: 14px;
+    }
+
+    .row{
+      display:flex;
+      gap: 14px;
+      justify-content:center;
+      align-items:center;
+      flex-wrap:wrap;
+      margin-top: 14px;
+    }
+
+    button{
+      border:0;
+      border-radius: 14px;
+      padding: 14px 22px;
+      font-size: 18px;
+      font-weight: 800;
+      color:#fff;
+      cursor:pointer;
+      min-width: 150px;
+      box-shadow: 0 12px 22px rgba(0,0,0,.12);
+      transform: translateZ(0);
+    }
+    button:active{ transform: scale(.98); }
+
+    #yesBtn{ background: var(--yes); }
+    #noBtn{ background: var(--no); }
+
+    /* Cards / game containers */
+    .card{
+      background: var(--card);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      padding: 18px;
+      text-align:center;
+      width: min(920px, 92vw);
+      margin: 0 auto;
+    }
+
+    .gameTitle{
+      color: var(--pink);
+      font-size: clamp(20px, 5.5vw, 30px);
+      margin: 4px 0 8px;
+      font-weight: 900;
+    }
+
+    .hint{
+      color:#666;
+      font-size: 14px;
+      margin: 0 0 14px;
+    }
+
+    .progress{
+      display:flex;
+      justify-content:center;
+      gap:10px;
+      flex-wrap:wrap;
+      margin: 10px 0 14px;
+    }
+    .badge{
+      background:#ffe3ed;
+      color: var(--pink);
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: 14px;
+    }
+
+    .notice{
+      margin: 10px auto 0;
+      display:none;
+      width: min(920px, 92vw);
+      background: rgba(255,255,255,.90);
+      border: 1px solid #ffd0df;
+      border-radius: 14px;
+      padding: 10px 12px;
+      box-shadow: 0 10px 18px rgba(0,0,0,.10);
+      color:#444;
+      font-weight: 800;
+    }
+    .notice.show{ display:block; }
+
+    /* Game 1 arena */
+    .arena{
+      position:relative;
+      height: 290px;
+      border-radius: 18px;
+      background: linear-gradient(180deg, #fff6f9 0%, #ffffff 70%);
+      border: 2px dashed #ffd0df;
+      overflow:hidden;
+    }
+
+    .tapItem{
+      position:absolute;
+      width: 54px;
+      height: 54px;
+      border-radius: 16px;
+      display:grid;
+      place-items:center;
+      font-size: 30px;
+      background:#fff;
+      box-shadow: 0 14px 22px rgba(0,0,0,.14);
+      border: 1px solid #ffd0df;
+      touch-action: manipulation;
+      transition: transform 160ms ease, opacity 160ms ease;
+    }
+
+    /* Memory grid (10 cards) */
+    .memGrid{
+      display:grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+    @media (max-width: 520px){
+      .memGrid{ grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    }
+    @media (max-width: 390px){
+      .memGrid{ grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+
+    .memCard{
+      height: 78px;
+      border-radius: 16px;
+      border: 2px solid #ffd0df;
+      background: #fff;
+      box-shadow: 0 10px 18px rgba(0,0,0,.10);
+      cursor:pointer;
+      position:relative;
+      overflow:hidden;
+      touch-action: manipulation;
+    }
+    .memCard:active{ transform: scale(.98); }
+
+    .memFront, .memBack{
+      position:absolute;
+      inset:0;
+      display:grid;
+      place-items:center;
+      transition: transform 220ms ease, opacity 220ms ease;
+    }
+    .memFront{
+      background: linear-gradient(180deg, #ffe3ed 0%, #fff 80%);
+      font-size: 26px;
+    }
+    .memBack{
+      background-size: cover;
+      background-position: center;
+      transform: scale(.98);
+      opacity: 0;
+    }
+    .memCard.revealed .memFront{ opacity: 0; transform: scale(.98); }
+    .memCard.revealed .memBack{ opacity: 1; transform: scale(1); }
+    .memCard.matched{
+      border-color: #b2f2bb;
+      box-shadow: 0 10px 18px rgba(64,192,87,.18);
+    }
+
+    /* Game 3 date */
+    .dateWrap{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    input[type="date"]{
+      font-size: 18px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 2px solid #ffd0df;
+      outline: none;
+      background: #fff;
+      width: min(320px, 90%);
+    }
+    .primary{
+      background: #6f42c1;
+      min-width: 180px;
+    }
+
+    /* Final screen */
+    .finalWrap{
+      position:relative;
+      width:min(1000px, 92vw);
+      margin:auto;
+      border-radius: 26px;
+      overflow:hidden;
+      box-shadow: var(--shadow);
+      background:#000;
+    }
+    .finalWrap img{
+      width:100%;
+      height: 560px;
+      object-fit: cover;
+      display:block;
+      opacity: .90;
+    }
+    .finalOverlay{
+      position:absolute;
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding: 18px;
+      background: linear-gradient(180deg, rgba(0,0,0,.18) 0%, rgba(0,0,0,.48) 100%);
+      text-align:center;
+    }
+    .finalText{
+      color:#fff;
+      max-width: 760px;
+    }
+    .finalText h1{
+      margin: 0 0 10px;
+      font-size: clamp(28px, 7vw, 46px);
+      line-height:1.1;
+      text-shadow: 0 12px 26px rgba(0,0,0,.35);
+    }
+    .finalText p{
+      margin: 0;
+      font-size: clamp(15px, 4.2vw, 20px);
+      opacity:.95;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="float" id="float" aria-hidden="true"></div>
+
+  <!-- SCREEN 1: Ask -->
+  <section class="screen active" id="screenAsk">
+    <div class="center">
+      <div class="bigTitle">Will you be my Valentine? 💕</div>
+      <div class="sub">Choose wisely 😇</div>
+
+      <div class="row">
+        <button id="yesBtn">Yes 💚</button>
+        <button id="noBtn">No ❤️</button>
+      </div>
+
+      <div class="notice" id="notice"></div>
+    </div>
+  </section>
+
+  <!-- SCREEN 2: Game 1 -->
+  <section class="screen" id="screenGame1">
+    <div class="center">
+      <div class="card">
+        <div class="gameTitle">Complete 3 Mini-games to be my Valentine<br> Mini-game 1/3: Catch 10 kisses 💋</div>
+        <div class="hint">Tap 💋 to collect. Don’t touch 💩 or the game is over.</div>
+
+        <div class="progress">
+          <div class="badge">Kisses: <span id="g1Score">0</span>/10</div>
+        </div>
+
+        <div class="arena" id="arena"></div>
+
+        <div class="row">
+          <button class="primary" id="restartG1">Restart</button>
+        </div>
+      </div>
+
+      <div class="notice" id="noticeG1"></div>
+    </div>
+  </section>
+
+  <!-- SCREEN 3: Game 2 -->
+  <section class="screen" id="screenGame2">
+    <div class="center">
+      <div class="card">
+        <div class="gameTitle">Mini-game 2/3: Match the photos</div>
+        <div class="hint">Find all 5 pairs.</div>
+
+        <div class="progress">
+          <div class="badge">Pairs: <span id="g2Pairs">0</span>/5</div>
+        </div>
+
+        <div class="memGrid" id="memGrid"></div>
+
+        <div class="row" style="margin-top:14px;">
+          <button class="primary" id="restartG2">Restart</button>
+        </div>
+      </div>
+
+      <div class="notice" id="noticeG2"></div>
+    </div>
+  </section>
+
+  <!-- SCREEN 4: Game 3 -->
+  <section class="screen" id="screenGame3">
+    <div class="center">
+      <div class="card">
+        <div class="gameTitle">Mini-game 3/3: When was the day you became my boyfriend? 😌</div>
+        <div class="hint">
+          Choose the date. You have <b>20 seconds</b>. If time runs out, you must start <b>ALL games again</b>.
+        </div>
+
+        <div class="progress">
+          <div class="badge">Time left: <span id="g3Time">20</span>s</div>
+        </div>
+
+        <div class="dateWrap">
+          <!-- iPhone/Safari shows a wheel UI for date input -->
+          <input id="dateInput" type="date" />
+          <button class="primary" id="submitDate">Submit</button>
+        </div>
+      <div class="notice" id="noticeG3"></div>
+    </div>
+  </section>
+
+  <!-- SCREEN 5: Final -->
+  <section class="screen" id="screenFinal">
+    <div class="finalWrap">
+      <!-- ✅ PLACEHOLDER: Replace src with your own image file/link -->
+     <a href="https://ibb.co/PG9scRDJ"><img src="https://i.ibb.co/TMbD4ZWJ/IMG-8835.jpg" alt="IMG-8835" border="0"></a>
+      <div class="finalOverlay">
+        <div class="finalText">
+          <h1>Yay! Thank you for being my Valentine! 💖</h1>
+          <p>Best Boyfriend ever! 🥰</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    // iOS: reduce double-tap zoom issues
+    document.addEventListener('touchend', (e) => {
+      const now = Date.now();
+      if (document._lastTouchEnd && now - document._lastTouchEnd <= 350) e.preventDefault();
+      document._lastTouchEnd = now;
+    }, { passive: false });
+
+    // Floating hearts
+    const float = document.getElementById("float");
+    function spawnFloatHeart(){
+      const s = document.createElement("span");
+      s.textContent = Math.random() < 0.33 ? "💗" : (Math.random() < 0.5 ? "💞" : "💖");
+      s.style.left = Math.random()*100 + "%";
+      s.style.bottom = "-40px";
+      s.style.animationDuration = (5 + Math.random()*6) + "s";
+      s.style.opacity = (0.18 + Math.random()*0.55).toFixed(2);
+      float.appendChild(s);
+      setTimeout(()=> s.remove(), 12000);
+    }
+    setInterval(spawnFloatHeart, 520);
+
+    // Screens
+    const screenAsk   = document.getElementById("screenAsk");
+    const screenGame1 = document.getElementById("screenGame1");
+    const screenGame2 = document.getElementById("screenGame2");
+    const screenGame3 = document.getElementById("screenGame3");
+    const screenFinal = document.getElementById("screenFinal");
+
+    function show(screen){
+      [screenAsk, screenGame1, screenGame2, screenGame3, screenFinal].forEach(s => s.classList.remove("active"));
+      screen.classList.add("active");
+      hideNotices();
+    }
+
+    // Notices
+    const notice   = document.getElementById("notice");
+    const noticeG1 = document.getElementById("noticeG1");
+    const noticeG2 = document.getElementById("noticeG2");
+    const noticeG3 = document.getElementById("noticeG3");
+
+    function hideNotices(){
+      [notice, noticeG1, noticeG2, noticeG3].forEach(n => n.classList.remove("show"));
+    }
+    function toast(el, msg){
+      el.textContent = msg;
+      el.classList.add("show");
+      clearTimeout(el._t);
+      el._t = setTimeout(()=> el.classList.remove("show"), 1600);
+    }
+
+    // ===== Global reset: start ALL over =====
+    function resetAll(reasonText = ""){
+      stopGame1();
+      stopGame3Timer();
+
+      // reset game state
+      g1Score = 0;
+      g2Pairs = 0;
+      revealed = [];
+      lockBoard = false;
+      g3Time = 20;
+      dateInput.value = "";
+
+      // clear UI
+      arena.innerHTML = "";
+      memGrid.innerHTML = "";
+      g1ScoreEl.textContent = "0";
+      g2PairsEl.textContent = "0";
+      g3TimeEl.textContent = "20";
+
+      show(screenAsk);
+      if (reasonText) toast(notice, reasonText);
+    }
+
+    // ===== Start screen: Yes/No =====
+    const yesBtn = document.getElementById("yesBtn");
+    const noBtn  = document.getElementById("noBtn");
+
+    // NO: alternating sad / angry emojis
+    let noClickCount = 0;
+    const sadEmojis = ["😢","🥺","💔","😞","😭"];
+    const angryEmojis = ["😡","😤","😠","🤬","😾"];
+
+   
+    noBtn.addEventListener("click", () => {
+      noClickCount++;
+      const isSad = (noClickCount % 2 === 1);
+      const emoji = isSad
+        ? sadEmojis[Math.floor(Math.random()*sadEmojis.length)]
+        : angryEmojis[Math.floor(Math.random()*angryEmojis.length)];
+toast(
+  notice,
+  isSad
+    ? `${emoji} ${["Oh no…", "Are you sure?", "Please don’t", "That hurts…",][Math.floor(Math.random()*4)]}`
+    : `${emoji} ${["Really?!", "Seriously?!", "Think again", "Last chance!", "What is wrong with you??", "You had ONE job"][Math.floor(Math.random()*6)]}`
+);
+    });
+
+    // YES: only way to proceed
+    yesBtn.addEventListener("click", ()=>{
+      show(screenGame1);
+      startGame1();
+    });
+
+    // ===== Game 1: Catch 10 kisses 💋, avoid 💩 =====
+    const arena = document.getElementById("arena");
+    const g1ScoreEl = document.getElementById("g1Score");
+    const restartG1 = document.getElementById("restartG1");
+
+    let g1Score = 0;
+    const g1Goal = 10;
+    let g1Spawner = null;
+
+    restartG1.addEventListener("click", ()=>{
+      show(screenGame1);
+      startGame1();
+    });
+
+    function startGame1(){
+      stopGame1();
+      arena.innerHTML = "";
+      g1Score = 0;
+      g1ScoreEl.textContent = "0";
+
+      // spawn burst (more fun immediately)
+      for (let i=0;i<4;i++) setTimeout(()=>spawnG1Item("kiss"), i*140);
+      setTimeout(()=>spawnG1Item("poop"), 260);
+
+      g1Spawner = setInterval(()=>{
+        spawnG1Item(Math.random() < 0.78 ? "kiss" : "poop");
+      }, 520);
+    }
+
+    function stopGame1(){
+      if (g1Spawner){ clearInterval(g1Spawner); g1Spawner = null; }
+    }
+
+    function spawnG1Item(type){
+      if (!screenGame1.classList.contains("active")) return;
+      if (g1Score >= g1Goal) return;
+
+      const item = document.createElement("div");
+      item.className = "tapItem";
+      item.textContent = (type === "kiss") ? "💋" : "💩";
+
+      const rect = arena.getBoundingClientRect();
+      const size = 54;
+      const padding = 10;
+      const x = Math.random() * (rect.width  - size - padding*2) + padding;
+      const y = Math.random() * (rect.height - size - padding*2) + padding;
+
+      item.style.left = x + "px";
+      item.style.top  = y + "px";
+
+      const ttl = 1100 + Math.random()*900;
+      const born = Date.now();
+
+      function tapped(ev){
+        ev.preventDefault();
+        ev.stopPropagation();
+
+        if (type === "poop"){
+          item.style.opacity = "0";
+          item.style.transform = "scale(1.2)";
+          setTimeout(()=> item.remove(), 150);
+          resetAll("💩 Game over! Start again 😈");
+          return;
+        }
+
+        g1Score++;
+        g1ScoreEl.textContent = g1Score;
+
+        item.style.opacity = "0";
+        item.style.transform = "scale(1.25)";
+        setTimeout(()=> item.remove(), 150);
+
+        if (g1Score >= g1Goal){
+          stopGame1();
+          setTimeout(()=>{
+            show(screenGame2);
+            startGame2();
+          }, 380);
+        }
+      }
+
+      item.addEventListener("pointerdown", tapped);
+      arena.appendChild(item);
+
+      // auto remove
+      const timer = setInterval(()=>{
+        if (!item.isConnected) { clearInterval(timer); return; }
+        if (Date.now() - born > ttl){
+          item.style.opacity = "0";
+          setTimeout(()=> item.remove(), 160);
+          clearInterval(timer);
+        }
+      }, 90);
+    }
+
+    // ===== Game 2: Memory (10 cards / 5 pairs) =====
+    const memGrid = document.getElementById("memGrid");
+    const g2PairsEl = document.getElementById("g2Pairs");
+    const restartG2 = document.getElementById("restartG2");
+
+    let g2Pairs = 0;
+    let revealed = [];
+    let lockBoard = false;
+
+    restartG2.addEventListener("click", ()=>{
+      show(screenGame2);
+      startGame2();
+    });
+
+    // ===========================
+    // ✅✅ MEMORY IMAGE PLACEHOLDERS (10 cards total = 5 pairs)
+    // Replace these 5 placeholders with your own image URLs or local paths.
+    // Example:
+    //   "images/pic1.jpg"
+    //   "https://your-site.com/pic1.jpg"
+    //
+    // IMPORTANT: Use 5 UNIQUE images. Each is duplicated automatically to make pairs.
+    // ===========================
+    const MEMORY_IMAGES_5 = [
+      "https://i.ibb.co/1YxjpMqx/IMG-6598.jpg", // <-- replace1
+      "https://i.ibb.co/rGBc3Rmd/IMG-8814.avif", // <-- replace1
+      "https://i.ibb.co/MDcMJTcM/516820b0-7eb7-485f-8078-b93bce623596.jpg", // <-- replace1
+      "https://i.ibb.co/1G9dt0fG/IMG-6596-2.jpg", // <-- replace1
+      "https://i.ibb.co/kVKmc2Rb/IMG-3641.jpg"  // <-- replace
+    ];
+    // ===========================
+
+    function startGame2(){
+      memGrid.innerHTML = "";
+      g2Pairs = 0;
+      revealed = [];
+      lockBoard = false;
+      g2PairsEl.textContent = "0";
+
+      const deck = shuffle([...MEMORY_IMAGES_5, ...MEMORY_IMAGES_5].map((src, idx)=>({
+        id: idx,
+        src,
+        key: src
+      })));
+
+      deck.forEach(cardData=>{
+        const card = document.createElement("div");
+        card.className = "memCard";
+        card.dataset.key = cardData.key;
+
+        const front = document.createElement("div");
+        front.className = "memFront";
+        front.textContent = "💗";
+
+        const back = document.createElement("div");
+        back.className = "memBack";
+        back.style.backgroundImage = `url('${cardData.src}')`;
+
+        // visible placeholder pattern if not replaced yet
+        if (cardData.src.startsWith("YOUR_IMAGE_")){
+          back.style.backgroundImage = "none";
+          back.style.background = "repeating-linear-gradient(45deg, #ffd0df, #ffd0df 10px, #fff 10px, #fff 20px)";
+          back.innerHTML = "<div style='font-weight:900;color:#d6336c;font-size:12px;padding:6px;text-align:center;'>ADD<br>IMAGE</div>";
+        }
+
+        card.appendChild(front);
+        card.appendChild(back);
+
+        card.addEventListener("pointerdown", (e)=>{
+          e.preventDefault();
+          onMemoryTap(card);
+        });
+
+        memGrid.appendChild(card);
+      });
+    }
+
+    function onMemoryTap(card){
+      if (!screenGame2.classList.contains("active")) return;
+      if (lockBoard) return;
+      if (card.classList.contains("matched")) return;
+      if (card.classList.contains("revealed")) return;
+
+      card.classList.add("revealed");
+      revealed.push(card);
+
+      if (revealed.length === 2){
+        lockBoard = true;
+        const [a, b] = revealed;
+
+        if (a.dataset.key === b.dataset.key){
+          a.classList.add("matched");
+          b.classList.add("matched");
+          revealed = [];
+          lockBoard = false;
+
+          g2Pairs++;
+          g2PairsEl.textContent = g2Pairs;
+
+          if (g2Pairs >= 5){
+            setTimeout(()=>{
+              show(screenGame3);
+              startGame3();
+            }, 450);
+          }
+        } else {
+          setTimeout(()=>{
+            a.classList.remove("revealed");
+            b.classList.remove("revealed");
+            revealed = [];
+            lockBoard = false;
+          }, 650);
+        }
+      }
+    }
+
+    // ===== Game 3: Date wheel + 20s timer; timeout => restart ALL games =====
+    const dateInput = document.getElementById("dateInput");
+    const submitDate = document.getElementById("submitDate");
+    const g3TimeEl = document.getElementById("g3Time");
+
+    let g3Time = 20;
+    let g3Timer = null;
+
+    function startGame3(){
+      stopGame3Timer();
+      g3Time = 20;
+      g3TimeEl.textContent = "20";
+      dateInput.value = "";
+
+      g3Timer = setInterval(()=>{
+        if (!screenGame3.classList.contains("active")) return;
+        g3Time--;
+        g3TimeEl.textContent = String(g3Time);
+
+        if (g3Time <= 0){
+          stopGame3Timer();
+          resetAll("⏰ Time’s up! Start ALL games again 😈");
+        }
+      }, 1000);
+    }
+
+    function stopGame3Timer(){
+      if (g3Timer){ clearInterval(g3Timer); g3Timer = null; }
+    }
+
+    function isCorrectDate(value){
+      // value is "YYYY-MM-DD"
+      if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+      const [yyyy, mm, dd] = value.split("-");
+      // Correct: 3. Januar (any year)
+      return (mm === "01" && dd === "03");
+    }
+
+    submitDate.addEventListener("click", ()=>{
+      if (!screenGame3.classList.contains("active")) return;
+
+      if (!dateInput.value){
+        toast(noticeG3, "Pick a date first 🙂");
+        return;
+      }
+
+      if (isCorrectDate(dateInput.value)){
+        stopGame3Timer();
+        show(screenFinal);
+      } else {
+        toast(noticeG3, "Nope 😭 Try again!");
+      }
+    });
+
+    // ===== Helpers =====
+    function shuffle(arr){
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--){
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+  </script>
+</body>
+</html>
