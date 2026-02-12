@@ -354,10 +354,10 @@
     <div class="center">
       <div class="card">
         <div class="gameTitle">Mini-game 2/3: Match the photos</div>
-        <div class="hint">Find all 5 pairs.</div>
+        <div class="hint">Find all 6 pairs.</div>
 
         <div class="progress">
-          <div class="badge">Pairs: <span id="g2Pairs">0</span>/5</div>
+          <div class="badge">Pairs: <span id="g2Pairs">0</span>/6</div>
         </div>
 
         <div class="memGrid" id="memGrid"></div>
@@ -397,10 +397,10 @@
   <section class="screen" id="screenFinal">
     <div class="finalWrap">
       <!-- ✅ PLACEHOLDER: Replace src with your own image file/link -->
-     <a href="https://ibb.co/PG9scRDJ"><img src="https://i.ibb.co/TMbD4ZWJ/IMG-8835.jpg" alt="IMG-8835" border="0"></a>
+      <a href="https://ibb.co/PG9scRDJ"><img src="https://i.ibb.co/TMbD4ZWJ/IMG-8835.jpg" alt="IMG-8835" border="0"></a>
       <div class="finalOverlay">
         <div class="finalText">
-          <h1>Yay! Thank you for being my Valentine! 💖</h1>
+          <h1>Yay! Thank you for being my Valentine Schatzi! 💖</h1>
           <p>Best Boyfriend ever! 🥰</p>
         </div>
       </div>
@@ -491,19 +491,19 @@
     const sadEmojis = ["😢","🥺","💔","😞","😭"];
     const angryEmojis = ["😡","😤","😠","🤬","😾"];
 
-   
     noBtn.addEventListener("click", () => {
       noClickCount++;
       const isSad = (noClickCount % 2 === 1);
       const emoji = isSad
         ? sadEmojis[Math.floor(Math.random()*sadEmojis.length)]
         : angryEmojis[Math.floor(Math.random()*angryEmojis.length)];
-toast(
-  notice,
-  isSad
-    ? `${emoji} ${["Oh no…", "Are you sure?", "Please don’t", "That hurts…",][Math.floor(Math.random()*4)]}`
-    : `${emoji} ${["Really?!", "Seriously?!", "Think again", "Last chance!", "What is wrong with you??", "You had ONE job"][Math.floor(Math.random()*6)]}`
-);
+
+      toast(
+        notice,
+        isSad
+          ? `${emoji} ${["Oh no…", "Are you sure?", "Please don’t", "That hurts…"][Math.floor(Math.random()*4)]}`
+          : `${emoji} ${["Really?!", "Seriously?!", "Think again", "Last chance!", "What is wrong with you??", "You had ONE job"][Math.floor(Math.random()*6)]}`
+      );
     });
 
     // YES: only way to proceed
@@ -607,7 +607,7 @@ toast(
       }, 90);
     }
 
-    // ===== Game 2: Memory (10 cards / 5 pairs) =====
+    // ===== Game 2: Memory (12 cards / 6 pairs) =====
     const memGrid = document.getElementById("memGrid");
     const g2PairsEl = document.getElementById("g2Pairs");
     const restartG2 = document.getElementById("restartG2");
@@ -622,20 +622,18 @@ toast(
     });
 
     // ===========================
-    // ✅✅ MEMORY IMAGE PLACEHOLDERS (10 cards total = 5 pairs)
-    // Replace these 5 placeholders with your own image URLs or local paths.
-    // Example:
-    //   "images/pic1.jpg"
-    //   "https://your-site.com/pic1.jpg"
-    //
-    // IMPORTANT: Use 5 UNIQUE images. Each is duplicated automatically to make pairs.
+    // ✅✅ MEMORY IMAGE PLACEHOLDERS (12 cards total = 6 pairs)
+    // Replace these 6 items with your own image URLs or local paths.
+    // IMPORTANT: Use 6 UNIQUE images. Each is duplicated automatically to make pairs.
+    // The 6th one is a placeholder image (shows "ADD IMAGE") until you replace it.
     // ===========================
-    const MEMORY_IMAGES_5 = [
+    const MEMORY_IMAGES_6 = [
       "https://i.ibb.co/1YxjpMqx/IMG-6598.jpg", // <-- replace1
       "https://i.ibb.co/rGBc3Rmd/IMG-8814.avif", // <-- replace1
       "https://i.ibb.co/MDcMJTcM/516820b0-7eb7-485f-8078-b93bce623596.jpg", // <-- replace1
       "https://i.ibb.co/1G9dt0fG/IMG-6596-2.jpg", // <-- replace1
-      "https://i.ibb.co/kVKmc2Rb/IMG-3641.jpg"  // <-- replace
+      "https://i.ibb.co/kVKmc2Rb/IMG-3641.jpg",  // <-- replace1
+      "https://i.ibb.co/VpSndkVb/149cb59a-ed8f-4bc7-ad82-9b8fa51c09cf.jpg"   // <-- placeholder 
     ];
     // ===========================
 
@@ -646,7 +644,7 @@ toast(
       lockBoard = false;
       g2PairsEl.textContent = "0";
 
-      const deck = shuffle([...MEMORY_IMAGES_5, ...MEMORY_IMAGES_5].map((src, idx)=>({
+      const deck = shuffle([...MEMORY_IMAGES_6, ...MEMORY_IMAGES_6].map((src, idx)=>({
         id: idx,
         src,
         key: src
@@ -663,13 +661,14 @@ toast(
 
         const back = document.createElement("div");
         back.className = "memBack";
-        back.style.backgroundImage = `url('${cardData.src}')`;
 
         // visible placeholder pattern if not replaced yet
         if (cardData.src.startsWith("YOUR_IMAGE_")){
           back.style.backgroundImage = "none";
           back.style.background = "repeating-linear-gradient(45deg, #ffd0df, #ffd0df 10px, #fff 10px, #fff 20px)";
           back.innerHTML = "<div style='font-weight:900;color:#d6336c;font-size:12px;padding:6px;text-align:center;'>ADD<br>IMAGE</div>";
+        } else {
+          back.style.backgroundImage = `url('${cardData.src}')`;
         }
 
         card.appendChild(front);
@@ -706,7 +705,7 @@ toast(
           g2Pairs++;
           g2PairsEl.textContent = g2Pairs;
 
-          if (g2Pairs >= 5){
+          if (g2Pairs >= 6){
             setTimeout(()=>{
               show(screenGame3);
               startGame3();
@@ -746,9 +745,9 @@ toast(
           stopGame3Timer();
           resetAll("⏰ Time’s up! Start ALL games again 😈");
         }
+
       }, 1000);
     }
-
     function stopGame3Timer(){
       if (g3Timer){ clearInterval(g3Timer); g3Timer = null; }
     }
